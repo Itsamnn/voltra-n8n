@@ -46,15 +46,18 @@ n8n is used only where deterministic scheduling and routing are required.
 ## Repository Structure
 ```
 smartgrid-n8n-automation/
-├── workflows/
-│   ├── Periodic NILM Inference.json
-│   ├── Daily Energy Report.json
-│   └── Telegram Chat Orchestrator.json
-│
-├── screenshots/
-│   ├── periodic-nilm-inference.svg
-│   ├── daily-energy-report.svg
-│   └── telegram-chat-orchestrator.svg
+├── n8n/
+│   ├── workflows/
+│   │   ├── Periodic NILM Inference.json
+│   │   ├── Daily Energy Report.json
+│   │   └── Telegram Chat Orchestrator.json
+│   │
+│   ├── screenshots/
+│   │   ├── periodic-nilm-inference.svg
+│   │   ├── daily-energy-report.svg
+│   │   └── telegram-chat-orchestrator.svg
+│   │
+│   └── (workflows and screenshots)
 │
 └── README.md
 ```
