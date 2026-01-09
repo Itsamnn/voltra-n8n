@@ -23,8 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.telegram.org/bot8437509167:AAGMBzHN_JelEhxwsEs1hT7F84oCc7utlFM/getUpdates?limit=100",
-        "options": {}
+"url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/getUpdates?limit=100",        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
