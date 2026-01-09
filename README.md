@@ -87,7 +87,7 @@ smartgrid-n8n-automation/
 Schedule → NILM /report → Normalize → Firebase (read-only analytics)
 ```
 
-![Periodic NILM Inference Workflow](screenshots/periodic-nilm-inference.svg)
+![Periodic NILM Inference Workflow](n8n/screenshots/periodic-nilm-inference.svg)
 
 ### 2️⃣ Daily Energy Report (8 AM / 8 PM)
 
@@ -113,7 +113,7 @@ Schedule → NILM /report → Normalize → Firebase (read-only analytics)
 Schedule → Firebase Read → NILM /ask → Format → Telegram
 ```
 
-![Daily Energy Report Workflow](screenshots/daily-energy-report.svg)
+![Daily Energy Report Workflow](n8n/screenshots/daily-energy-report.svg)
 
 ### 3️⃣ Telegram Chat Orchestrator
 
@@ -137,7 +137,7 @@ Telegram → NILM → Telegram
 n8n never "thinks".  
 It only passes messages.
 
-![Telegram Chat Orchestrator Workflow](screenshots/telegram-chat-orchestrator.svg)
+![Telegram Chat Orchestrator Workflow](n8n/screenshots/telegram-chat-orchestrator.svg)
 
 ## Design Principles
 
