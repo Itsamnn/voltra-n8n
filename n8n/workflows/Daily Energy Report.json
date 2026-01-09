@@ -1,0 +1,220 @@
+{
+  "name": "Daily Energy Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "004c12e3-d6e1-4f8c-8514-61398436809e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/ask",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"Analyze my complete energy usage for the past 24 hours. Include: peak usage times, appliances used, total cost, and 3 specific recommendations to reduce my bill today.\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        512,
+        0
+      ],
+      "id": "b2da9631-d4bd-417f-9263-8990bcd2ceed",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "chatId": "862124080",
+        "text": "=🌅 Good Morning! Here's Your Daily Energy Report:  {{ $json.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "33a9f779-d083-407b-b09e-8ba88ca25b4b",
+      "name": "Send a text message",
+      "webhookId": "7ef30f5a-fb3b-4c42-a6a9-a4f1c940e774",
+      "credentials": {
+        "telegramApi": {
+          "id": "4zIjuwKVloceGX3f",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the answer text\nlet text = items[0].json.answer;\n\n// Replace literal \\n with actual newlines\ntext = text.replace(/\\\\n/g, '\\n');\n\n// Telegram has a 4096 character limit, so truncate if needed\nif (text.length > 4000) {\n  text = text.substring(0, 3900) + '\\n\\n... (Report truncated. Ask for specific details!)';\n}\n\nreturn [{\n  json: {\n    message: text\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "514261e2-cb57-4db4-a703-60365eac68ae",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "content": "## Daily Reporting Workflow (08:00 AM)\n\n**Purpose**\nGenerates a once-per-day analytical energy report using aggregated historical data.\n\n**Trigger Time**\nRuns automatically every day at **08:00 AM**.\n\n**What this workflow DOES**\n• Requests a full-day energy summary from the NILM backend  \n• Retrieves appliance-level usage, cost estimation, and trends  \n• Formats a human-readable daily report  \n• Delivers the report via Telegram  \n\n**What this workflow DOES NOT**\n• Does NOT analyze raw telemetry  \n• Does NOT run AI models  \n• Does NOT control hardware  \n• Does NOT write to Firebase  \n\nAll intelligence and computation occur inside the NILM backend.\nThis workflow is orchestration-only.\n",
+        "height": 480,
+        "width": 512,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        -640
+      ],
+      "typeVersion": 1,
+      "id": "dce13023-48b5-431b-8b87-d6088e2f51b7",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Schedule Trigger\n\n**Role**\nTime-based orchestration trigger.\n\n**Execution**\nRuns once per day at **08:00 AM**.\n\n**Reason**\n• Aligns with daily billing cycles  \n• Ensures report completeness (previous day fully captured)\n\n**Does NOT**\n• Perform calculations  \n• Access Firebase  \n• Trigger hardware actions  \n\nThis node only starts the reporting pipeline.\n",
+        "height": 464,
+        "width": 432,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -384,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "d0eb2630-df70-4699-84f5-3629d459b53e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## HTTP Request → NILM Backend\n\n**Role**\nFetches the daily energy report from the NILM service.\n\n**Endpoint**\nGET /report  (or POST /ask with reporting context)\n\n**Data Retrieved**\n• Daily energy consumption\n• Appliance-level breakdown\n• Cost estimation (₹)\n• Peak usage windows\n• Efficiency indicators\n\n**Does NOT**\n• Read raw ESP32 telemetry\n• Modify database state\n• Execute AI logic\n\nThe NILM backend is the sole analytics authority.\n",
+        "height": 464,
+        "width": 512,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        128,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "1f5630a1-2bb1-4690-b616-515cca8a35fa",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Report Formatter (JavaScript)\n\n**Role**\nTransforms the NILM report into a Telegram-ready message.\n\n**Responsibilities**\n• Structure the report (sections, headings)\n• Format numbers, units, timestamps\n• Highlight key insights and savings\n\n**Does NOT**\n• Perform analytics\n• Infer appliances\n• Compute costs\n• Make decisions\n\nThis node contains presentation logic only.\n",
+        "height": 464,
+        "width": 544
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        672,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "f5aa7197-9521-486c-845d-1f61fb58e413",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Telegram Delivery\n\n**Role**\nDelivers the finalized daily report to the user.\n\n**Message Content**\n• Precomputed NILM report\n• Read-only insights\n• No actionable commands\n\n**Does NOT**\n• Accept control inputs\n• Trigger automation\n• Modify system state\n\nTelegram acts as a reporting interface only.\n",
+        "height": 464,
+        "width": 592,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1264,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "f7e8c0c3-ed99-4946-a021-ea8c0960ec7f",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## System Boundary Declaration\n\nThis workflow is **reporting-only**.\n\n• No AI reasoning\n• No NILM computation\n• No firmware interaction\n• No relay control\n• No Firebase writes\n\nAll analytics and intelligence live inside the NILM backend.\nn8n functions strictly as orchestration glue.\n",
+        "height": 288,
+        "width": 416,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        576,
+        -544
+      ],
+      "typeVersion": 1,
+      "id": "714c2382-6f4a-4d09-98a5-41cefc94ff90",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "9079fdd5-bd1c-4db0-bbf9-f1adcb07e374",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "97cdaab89af73ebd5970b4d23e9d1859d7eb3b935c78db3eb6127ddba5b4902d"
+  },
+  "id": "2DgyFXMDPtQBPfdf9WnHW",
+  "tags": []
+}

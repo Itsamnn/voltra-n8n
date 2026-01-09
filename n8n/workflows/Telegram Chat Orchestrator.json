@@ -1,0 +1,397 @@
+{
+  "name": "Telegram Chat Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -832,
+        32
+      ],
+      "id": "de722414-eb61-4cb6-93c0-eccd6282a82d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot8437509167:AAGMBzHN_JelEhxwsEs1hT7F84oCc7utlFM/getUpdates?limit=100",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -624,
+        32
+      ],
+      "id": "7f4d9950-91e0-4e53-a36a-f5d271d4113e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4502ee84-d058-4668-a857-7144153cb1d5",
+              "leftValue": "{{ $json.result }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        16
+      ],
+      "id": "05011d1d-23dc-4d8c-981e-3a5a02108d85",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const updates = items[0].json.result;\nif (!updates || updates.length === 0) {\n  return [];\n}\n\nconst latestUpdate = updates[updates.length - 1];\nconst message = latestUpdate.message;\nif (!message || !message.text) {\n  return [];\n}\n\n// Ignore messages sent by the bot itself or system\nif (message.from.is_bot) {\n  return [];\n}\n\n// Optional: ignore your daily-report intro messages\nif (message.text.startsWith('DAILY REPORT SMARTMETER:')) {\n  return [];\n}\n\nreturn [{\n  json: {\n    chat_id: message.chat.id,\n    text: message.text,\n    update_id: latestUpdate.update_id\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        0
+      ],
+      "id": "0cef6503-ad33-416f-9ef7-e0cfbb0630b6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/ask",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"={{ $json.text }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -112,
+        0
+      ],
+      "id": "95a27979-29a8-4b54-8992-6c1fbcd65f7b",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}\n",
+        "text": "={{$json.message}}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        16
+      ],
+      "id": "699db9ee-ea43-4837-9695-d4d4d142f014",
+      "name": "Send a text message",
+      "webhookId": "4440b0b0-9a21-4c1d-a5ec-f9217d422347",
+      "credentials": {
+        "telegramApi": {
+          "id": "4zIjuwKVloceGX3f",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot8437509167:AAGMBzHN_JelEhxwsEs1hT7F84oCc7utlFM/getUpdates?offset={{ $json.update_id + 1 }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        720,
+        16
+      ],
+      "id": "4e439521-429e-423b-91df-1619da05fabe",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $node[\"HTTP Request1\"].json.answer;\ntext = text.replace(/\\\\n/g, '\\n');\nif (text.length > 4000) {\n  text = text.substring(0, 3900) + '\\n\\n...(truncated)';\n}\n\nconst base = $node[\"Code in JavaScript\"].json;\n\nreturn [{\n  json: {\n    message: text,\n    chat_id: base.chat_id,\n    update_id: base.update_id\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        0
+      ],
+      "id": "66f7dcf9-b5c0-410d-9547-435a2692d85b",
+      "name": "Code"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        352,
+        0
+      ],
+      "id": "afb0773e-f0c9-4c03-825f-d0cabfc736a5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "content": "## Telegram Chat Orchestrator\n\nThis workflow connects Telegram to the NILM backend.\n\nIMPORTANT:\n• Does NOT analyze\n• Does NOT decide\n• Does NOT control hardware\n\nIt only routes messages → NILM → response\n",
+        "height": 256,
+        "width": 384,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "7f332a9f-1070-4caf-ac0a-b35db5423f3f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Poll Telegram Updates\n\nPeriodically polls Telegram for new messages.\n\nUses update offsets to avoid duplicates.\n\nThis is event intake, not logic.\n",
+        "height": 208,
+        "width": 304,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1040,
+        176
+      ],
+      "typeVersion": 1,
+      "id": "d80566f9-ebf9-418b-a4da-c84dd99ef6fb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Receive User Messages\n\nFetches incoming Telegram messages\nfrom users interacting with the bot.\n\nOnly text messages are processed.\n",
+        "height": 208,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        192
+      ],
+      "id": "a3494b21-2200-4ee9-8ed5-be4505eaac0d",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Extract User Query\n\nExtracts user text and chat ID\nfrom the Telegram payload.\n\nNo interpretation or decision logic.\n",
+        "height": 224,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -240
+      ],
+      "id": "7cdf1c48-2efd-4e60-9c7e-4b9306a0ce89",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Forward Query to NILM AI (/ask)\n\nSends user query to the NILM backend.\n\nThe NILM AI:\n- Selects tools\n- Fetches data\n- Performs analysis\n- Generates response\n\nAll intelligence lives there.\n",
+        "height": 320,
+        "width": 288,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        160
+      ],
+      "id": "e42aecf7-9b99-4e3b-9d8f-2e8bf9b77805",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Prepare AI Response\n\nFormats the NILM response\nfor Telegram delivery.\n\nThis step does not alter content meaning.\n",
+        "height": 224,
+        "width": 278,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        128,
+        -240
+      ],
+      "id": "883b6a27-8ed8-4288-8c4b-e96c1383d5e3",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Send AI Response to User\n\nReturns the NILM-generated response\nback to the Telegram user.\n\nThis completes the request–response loop.\n",
+        "height": 208,
+        "width": 304,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        528,
+        176
+      ],
+      "id": "4a7b2ac3-74bb-4525-8115-f3ebc9ca9e42",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "n8n is used strictly for orchestration.\nAll intelligence, analytics, and reasoning\nare implemented in the NILM backend.\n",
+        "height": 80,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -400
+      ],
+      "id": "e640554a-fb49-4803-9daf-5b92260c3628",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "94f0f9e5-b92a-49a5-8a04-b70238f651df",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "97cdaab89af73ebd5970b4d23e9d1859d7eb3b935c78db3eb6127ddba5b4902d"
+  },
+  "id": "dVV6J6b-_hEFVpz990SdB",
+  "tags": []
+}

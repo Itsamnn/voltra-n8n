@@ -1,0 +1,193 @@
+{
+  "name": "Periodic NILM Inference",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3525c164-3a3f-46c8-81e9-85bd7a9e3cb5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8000/report",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        304,
+        0
+      ],
+      "id": "d07d934e-9455-4068-8282-6b34cad27780",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const timestamp = new Date().toISOString();\nconst data = items[0].json;\n\nreturn [{\n  json: {\n    timestamp: timestamp,\n    nilm: data.nilm,\n    bill: data.bill,\n    analyzed_at: Date.now()\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        0
+      ],
+      "id": "af511256-7a3f-440d-bbdb-35916dcc230b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://nilm-based-smart-energymeter-default-rtdb.firebaseio.com/nilm_analysis/latest.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        944,
+        0
+      ],
+      "id": "e3791b75-d9b2-4b76-b138-9849096bb0a6",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "content": "## Periodic NILM Inference Workflow\n\nThis workflow runs on a fixed schedule to compute\nappliance-level energy insights using the NILM backend.\n\n• No decisions are made here\n• No hardware is controlled\n• Output is written as read-only analytics data\n\nActs as a cached intelligence layer for:\n- Android app\n- Daily reports\n- Dashboards\n",
+        "height": 304,
+        "width": 416,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        -448
+      ],
+      "typeVersion": 1,
+      "id": "8acc6fda-6cb7-4442-8c1c-66b2b107e877",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Schedule Trigger\n\nTriggers this workflow periodically (every 1–2 minutes).\n\nPurpose:\n- Maintain up-to-date NILM inference\n- Ensure latest appliance & cost insights are available\n\nThis is NOT real-time control.\nIt is background analytics refresh.\n",
+        "height": 368,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -384,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "2dea8cbf-5d7a-460f-8363-74572ac2d2f2",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Fetch NILM Analysis (/report)\n\nCalls the NILM backend `/report` endpoint.\n\nReturns:\n- Appliance inference (from relay ground truth)\n- Aggregate power analysis\n- Daily kWh estimate\n- Monthly bill prediction\n\nThe NILM backend performs all analysis.\n",
+        "height": 368,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "0a9ddd22-747e-4174-b455-ed9aeb50d1ea",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Normalize NILM Output\n\nTransforms the NILM response into a clean,\nconsistent structure for Firebase storage.\n\nNo inference or logic happens here.\nThis step only prepares data for persistence.\n",
+        "height": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        608,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "97752d59-214e-4403-aa8e-4344ff384ee3",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Persist Latest NILM State (Firebase)\n\nWrites the latest inferred analytics to Firebase RTDB.\n\nPath example:\n /nilm_analysis/latest\n\nThis data is:\n- Read-only for applications\n- Used by reports and dashboards\n- NOT used for device control\n",
+        "height": 400,
+        "width": 336,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1120,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "cb9057d0-ba41-46c2-bb25-3bc9bed7a160",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "2c959270-01c2-46b5-bce3-18515ef4727b",
+  "meta": {
+    "instanceId": "97cdaab89af73ebd5970b4d23e9d1859d7eb3b935c78db3eb6127ddba5b4902d"
+  },
+  "id": "C07vEsMTRTyw6jCNH_aB4",
+  "tags": []
+}
